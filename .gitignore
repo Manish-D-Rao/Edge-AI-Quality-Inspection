@@ -1,0 +1,31 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment variables
+.env
+.env.*
+venv
+
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Model weights and datasets
+models/
+datasets/*
+!datasets/README.md
+!datasets/samples/.gitkeep
+
+# Generated outputs and databases
+outputs/*
+*.db
+*.sqlite
+*.sqlite3
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
