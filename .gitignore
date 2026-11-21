@@ -7,6 +7,7 @@ __pycache__/
 # Environment variables
 .env
 .env.*
+!.env.example
 venv
 
 # Node
@@ -17,6 +18,11 @@ frontend/dist/
 models/
 datasets/*
 !datasets/README.md
+!datasets/labels/
+datasets/labels/*
+!datasets/labels/README.md
+!datasets/samples/
+datasets/samples/*
 !datasets/samples/.gitkeep
 
 # Generated outputs and databases
@@ -29,3 +35,5 @@ outputs/*
 .vscode/
 .idea/
 .DS_Store
+
+.clinerules

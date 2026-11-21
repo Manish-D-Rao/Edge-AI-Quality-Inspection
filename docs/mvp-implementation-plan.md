@@ -153,7 +153,10 @@ and hardware/model checks remain.
 ### Phase 01 — Baseline and dataset foundation
 
 Current status: baseline and experiments are implemented. Dataset labeling and
-real performance evaluation remain incomplete.
+real performance evaluation remain incomplete. T015, T016, and T018 require
+source/provenance information and human-verified image labels that are not
+available in the current workspace; those tasks remain blocked rather than
+being inferred from synthetic or unlabeled images.
 
 #### Mini-phase 01.1 — Preserve and document the baseline
 
@@ -171,13 +174,13 @@ real performance evaluation remain incomplete.
 
 #### Mini-phase 01.2 — Complete labeled dataset specification
 
-- [ ] **T012 [Plan:01.2]** Create `docs/annotation-guidelines.md` defining
+- [x] **T012 [Plan:01.2]** Create `docs/annotation-guidelines.md` defining
   normal/defect/uncertain labels, defect instance identity, bounding-box
   coordinates, occlusion handling, and how annotators handle ambiguous cases.
-- [ ] **T013 [Plan:01.2]** Add
+- [x] **T013 [Plan:01.2]** Add
   `datasets/labels/README.md` describing an annotation JSON format keyed by
   image/sample ID; do not put private or unlicensed imagery into Git.
-- [ ] **T014 [Plan:01.2]** Add a schema validator in
+- [x] **T014 [Plan:01.2]** Add a schema validator in
   `backend/app/services/annotation_schema.py` and focused tests in
   `backend/tests/test_annotation_schema.py`.
 - **Acceptance:** A valid labeled sample passes; missing IDs, invalid boxes,
@@ -189,53 +192,64 @@ real performance evaluation remain incomplete.
 - [ ] **T015 [Plan:01.3]** Collect normal and defective examples only from
   images the team may legally use; record source, board/revision if known,
   capture session, camera/lighting, and consent/license in
-  `datasets/labels/dataset_manifest.csv`.
+  `datasets/labels/dataset_manifest.csv`. **Blocked:** existing real samples
+  have unknown provenance and are marked unlabeled/pending.
 - [ ] **T016 [Plan:01.3]** Have two annotators independently label a subset and
   reconcile disagreements using `docs/annotation-guidelines.md`; store labels
-  in the agreed schema.
-- [ ] **T017 [Plan:01.3]** Add
+  in the agreed schema. **Blocked:** no verified annotations from two
+  annotators were supplied.
+- [x] **T017 [Plan:01.3]** Add
   `backend/scripts/create_dataset_split.py` to make deterministic
   development/validation/held-out splits grouped by board or capture session,
   and save IDs (not image copies) under `datasets/labels/splits/`.
 - [ ] **T018 [Plan:01.3]** Begin with at least 50 labeled defect instances and
   50 normal images overall, with at least 20 defect instances and 20 normal
   images held out; record the actual counts and warn that this small holdout
-  gives imprecise estimates.
+  gives imprecise estimates. **Blocked:** current labeled real-image counts
+  and held-out membership do not meet the minimums.
 - **Acceptance:** No board/capture session leaks across splits; annotations
   validate; manifest and split membership are reproducible. If counts are not
   met, the 70% recall goal remains blocked, not silently waived.
 
 ### Phase 02 — Define and implement a localization benchmark beyond raw difference
 
-Current status: the existing exploratory work is complete, but no alternative
-has been validated on labeled real defects.
+Current status: evaluation metrics, a fail-closed dataset runner, and an
+experimental structural detector are implemented and covered by fixture tests.
+The available synthetic comparison and not-evaluable held-out report are
+documented. No alternative has been validated on labeled real defects because
+the current manifest, annotations, and held-out split are not a valid paired
+evaluation set. Do not interpret synthetic results or fixture tests as PCB
+detection accuracy.
 
 #### Mini-phase 02.1 — Establish evaluation metrics and matching
 
-- [ ] **T019 [Plan:02.1]** Add
+- [x] **T019 [Plan:02.1]** Add
   `backend/app/services/detection_metrics.py` for defect-instance matching
   between candidate boxes and labeled boxes using IoU >= 0.3 as an explicit
   initial rule. Prevent multiple candidates from claiming the same ground
   truth instance.
-- [ ] **T020 [Plan:02.1]** Report recall, precision, F1, false candidate boxes
+- [x] **T020 [Plan:02.1]** Report recall, precision, F1, false candidate boxes
   per normal image, per-class results, and latency in
   `backend/tests/test_detection_metrics.py` fixtures and metric JSON.
-- [ ] **T021 [Plan:02.1]** Ask the project owner to set an acceptable
+- [x] **T021 [Plan:02.1]** Ask the project owner to set an acceptable
   false-candidate budget on normal images before comparing operating points;
-  record the chosen limit and rationale in the experiment report.
+  record the chosen limit and rationale in the experiment report. **Approved
+  MVP starting point:** mean <=5 false candidate boxes per normal image for a
+  manually reviewed prototype. This is a review-workload target, not a
+  production quality limit.
 - **Acceptance:** Hand-calculated fixtures pass, including empty predictions,
   empty ground truth, duplicate matches, and IoU threshold boundary cases.
 
 #### Mini-phase 02.2 — Build a controlled dataset runner
 
-- [ ] **T022 [Plan:02.2]** Add
+- [x] **T022 [Plan:02.2]** Add
   `backend/app/services/dataset_evaluation.py` to run a detector over the
   manifest/split IDs and produce machine-readable per-image and aggregate
   metrics.
-- [ ] **T023 [Plan:02.2]** Add
+- [x] **T023 [Plan:02.2]** Add
   `backend/run_dataset_evaluation.py` with explicit split, detector, config,
   and output arguments; refuse to overwrite existing evaluation directories.
-- [ ] **T024 [Plan:02.2]** Add tests using tiny temporary image/annotation
+- [x] **T024 [Plan:02.2]** Add tests using tiny temporary image/annotation
   fixtures in `backend/tests/test_dataset_evaluation.py`.
 - **Acceptance:** A deterministic fixture dataset can be evaluated without
   reading or writing production dataset images; JSON includes split identity
@@ -243,15 +257,15 @@ has been validated on labeled real defects.
 
 #### Mini-phase 02.3 — Implement a separate lightweight structural candidate method
 
-- [ ] **T025 [Plan:02.3]** Add a detector interface in
+- [x] **T025 [Plan:02.3]** Add a detector interface in
   `backend/app/services/detector_protocol.py` with one stable input/output
   contract; retain baseline CLI and API behavior.
-- [ ] **T026 [Plan:02.3]** Add a separately named experimental detector in
+- [x] **T026 [Plan:02.3]** Add a separately named experimental detector in
   `backend/app/services/structural_anomaly_detector.py`. Compare reference/test
   images after reliable registration and valid-source masking; combine
   intensity difference with a local structural or gradient difference map.
   Keep all tunable values in an explicit config object.
-- [ ] **T027 [Plan:02.3]** Add small synthetic unit fixtures and tests in
+- [x] **T027 [Plan:02.3]** Add small synthetic unit fixtures and tests in
   `backend/tests/test_structural_anomaly_detector.py` for identical images,
   a known local edit, invalid alignment/support, and coordinate consistency.
 - **Acceptance:** The detector returns reference-coordinate candidate boxes
@@ -263,9 +277,11 @@ has been validated on labeled real defects.
 - [ ] **T028 [Plan:02.4]** Run baseline and structural detector on development
   and validation splits with identical image pairs and metric rules; save to
   distinct `outputs/model_selection/<run-id>/` directories.
-- [ ] **T029 [Plan:02.4]** Document per-class recall, precision, normal-image
-  false-candidate rate, latency, parameters, failure cases, and visualization
-  examples in `docs/phase-02-detector-selection.md`.
+- [x] **T029 [Plan:02.4]** Document available per-class recall, precision,
+  normal-image false-candidate status, latency, parameters, failure cases,
+  and visualization examples in `docs/phase-02-detector-selection.md`.
+  The only available evidence is explicitly labeled synthetic; real split
+  comparison and normal-image false-candidate rate remain not evaluable.
 - [ ] **T030 [Plan:02.4]** Freeze the selected detector/configuration only if
   validation meets the pre-agreed false-candidate budget; otherwise keep the
   baseline available, report the recall target unmet, and list the next data
@@ -277,23 +293,29 @@ has been validated on labeled real defects.
 
 - [ ] **T031 [Plan:02.5]** Run the frozen detector once on the held-out split
   and save raw outputs/metrics to a new `outputs/held_out_evaluation/<run-id>/`.
-- [ ] **T032 [Plan:02.5]** Document recall numerator/denominator, matching
-  rule, precision, false candidates per normal image, latency, split counts,
-  uncertainty, and limitations in `docs/mvp-evaluation-report.md`.
+- [x] **T032 [Plan:02.5]** Document the held-out recall numerator/denominator,
+  matching rule, precision, false candidates per normal image, latency, split
+  counts, uncertainty, and limitations in `docs/mvp-evaluation-report.md`.
+  The report states not evaluable because the valid held-out split is empty
+  and real labels are pending.
 - **Acceptance:** State “at least 70% recall met” only if measured recall is
   >=0.70 on the defined held-out data and the false-candidate budget is met.
   Otherwise state that the target is not met or not evaluable.
 
 ### Phase 03 — Inspection service and API
 
-Current status: only `GET /api/health` exists in `backend/main.py`.
+Current status: the stateless upload-to-result API vertical slice is
+implemented with the OpenCV baseline as a provisional default. The baseline
+has not been frozen as the best detector because real-data comparison remains
+blocked by dataset labeling and split gaps. See
+`docs/phase-03-api.md`.
 
 #### Mini-phase 03.1 — Define API request/response types
 
-- [ ] **T033 [Plan:03.1]** Add Pydantic request/response schemas in
+- [x] **T033 [Plan:03.1]** Add Pydantic request/response schemas in
   `backend/app/schemas/inspection.py` for status, candidate boxes,
   detector/config ID, artifact URLs, and measured latency.
-- [ ] **T034 [Plan:03.1]** Add tests in
+- [x] **T034 [Plan:03.1]** Add tests in
   `backend/tests/test_inspection_schemas.py` for valid responses and invalid
   coordinates/fields.
 - **Acceptance:** API returns a stable, documented schema; no claim field
@@ -301,14 +323,15 @@ Current status: only `GET /api/health` exists in `backend/main.py`.
 
 #### Mini-phase 03.2 — Create upload inspection service
 
-- [ ] **T035 [Plan:03.2]** Add
+- [x] **T035 [Plan:03.2]** Add
   `backend/app/services/inspection_service.py` to decode validated uploaded
-  bytes, select the frozen detector, and return result metadata plus generated
-  image buffers/paths.
-- [ ] **T036 [Plan:03.2]** Add image validation for supported formats,
+  bytes, use the baseline as the provisional API default, and return result
+  metadata plus generated artifact URLs. Detector selection is not frozen
+  until the real-data gate is complete.
+- [x] **T036 [Plan:03.2]** Add image validation for supported formats,
   undecodable bytes, zero-length files, and a documented maximum upload size
   in `backend/app/services/image_validation.py`.
-- [ ] **T037 [Plan:03.2]** Add unit tests in
+- [x] **T037 [Plan:03.2]** Add unit tests in
   `backend/tests/test_inspection_service.py` using synthetic fixtures and
   mocked persistence only where required.
 - **Acceptance:** Service does not trust filenames as paths, does not overwrite
@@ -317,12 +340,12 @@ Current status: only `GET /api/health` exists in `backend/main.py`.
 
 #### Mini-phase 03.3 — Implement and test HTTP routes
 
-- [ ] **T038 [Plan:03.3]** Add `POST /api/inspect` in
+- [x] **T038 [Plan:03.3]** Add `POST /api/inspect` in
   `backend/main.py` or a small `backend/app/api/inspection.py` router; accept
   reference/test multipart uploads and return typed result JSON.
-- [ ] **T039 [Plan:03.3]** Keep `GET /api/health` and add artifact serving only
+- [x] **T039 [Plan:03.3]** Keep `GET /api/health` and add artifact serving only
   through validated IDs/paths that remain within the configured output root.
-- [ ] **T040 [Plan:03.3]** Add FastAPI tests in
+- [x] **T040 [Plan:03.3]** Add FastAPI tests in
   `backend/tests/test_inspection_api.py` for success, invalid image, oversize
   upload, detector failure, and artifact access.
 - **Acceptance:** `POST /api/inspect` works in-process via the test client;
@@ -331,11 +354,12 @@ Current status: only `GET /api/health` exists in `backend/main.py`.
 
 #### Mini-phase 03.4 — Choose persistence scope
 
-- [ ] **T041 [Plan:03.4]** For the first MVP, document whether history is
-  required. If not required, use unique run IDs and filesystem JSON only.
-- [ ] **T042 [Plan:03.4]** Add SQLite metadata/history only if the owner
-  confirms it is needed; isolate it in
-  `backend/app/services/inspection_repository.py` and test it separately.
+- [x] **T041 [Plan:03.4]** For the first MVP, document whether history is
+  required. History is not required for this local demo; successful runs use
+  unique IDs and filesystem result/artifact files.
+- [x] **T042 [Plan:03.4]** Defer SQLite metadata/history because history was not
+  requested. Do not add a repository or database until the owner confirms the
+  feature is needed.
 - **Acceptance:** No database is added just for future flexibility; if history
   is chosen, it does not store raw images by default and has a documented
   retention policy.
